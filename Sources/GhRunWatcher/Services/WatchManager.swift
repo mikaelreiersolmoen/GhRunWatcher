@@ -7,12 +7,26 @@ final class WatchManager: ObservableObject {
     @Published private(set) var repositoryURL: URL?
     @Published private(set) var githubCLIPath: String?
     private var tasks: [UUID: WatchTask] = [:]
+    private var terminationObserver: NSObjectProtocol?
     private static let repositoryURLKey = "RunWatcherRepositoryURL"
     private static let githubCLIPathKey = "RunWatcherGitHubCLIPath"
 
     init() {
         loadPersistedRepository()
         loadPersistedGitHubCLIPath()
+        terminationObserver = NotificationCenter.default.addObserver(
+            forName: NSApplication.willTerminateNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.cancelAllWatches()
+        }
+    }
+
+    deinit {
+        if let terminationObserver {
+            NotificationCenter.default.removeObserver(terminationObserver)
+        }
     }
 
     func promptForRepository() {
@@ -157,6 +171,14 @@ final class WatchManager: ObservableObject {
         watches.removeAll { $0.id == id }
         tasks[id]?.cancel()
         tasks.removeValue(forKey: id)
+    }
+
+    private func cancelAllWatches() {
+        for task in tasks.values {
+            task.cancel()
+        }
+        tasks.removeAll()
+        watches.removeAll()
     }
 
     private func postNotification(title: String, body: String) {
