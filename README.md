@@ -31,7 +31,7 @@ Download the latest `.zip` from [Releases](../../releases), extract it, and move
 
 The app will be created at `build/GhRunWatcher.app`. Move it to your Applications folder.
 
-### Setup
+## Setup
 
 1. Install and authenticate GitHub CLI:
    ```bash
@@ -45,9 +45,9 @@ The app will be created at `build/GhRunWatcher.app`. Move it to your Application
 ## Usage
 
 1. Start a GitHub Actions workflow in your configured repository
-2. Copy the run ID from the GitHub UI or CLI
-3. Click the GhRunWatcher menu bar icon
-4. Enter the run ID to start monitoring
+2. Copy the run ID from the GitHub URL
+3. Click the GhRunWatcher menu bar icon -> Add Run Watch...
+4. Enter the run ID and click Add
 5. You'll receive a notification when the run completes
 
 ## License
