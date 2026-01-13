@@ -152,12 +152,12 @@ final class WatchManager: ObservableObject {
         switch result {
         case .success(let exitCode, let lastLine):
             postNotification(
-                title: "Run #\(runId) succeeded",
+                title: "✅ Run #\(runId) succeeded",
                 body: buildNotificationBody(exitCode: exitCode, lastLine: lastLine)
             )
         case .workflowFailed(let exitCode, let lastLine):
             postNotification(
-                title: "Run #\(runId) failed",
+                title: "❌ Run #\(runId) failed",
                 body: buildNotificationBody(exitCode: exitCode, lastLine: lastLine)
             )
         case .failure(_, let message):
