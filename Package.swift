@@ -7,11 +7,19 @@ let package = Package(
         .macOS(.v13)
     ],
     products: [
-        .executable(name: "GhRunWatcher", targets: ["RunWatcher"])
+        .executable(name: "GhRunWatcher", targets: ["RunWatcher"]),
+        .executable(name: "GhRunWatcherMCP", targets: ["RunWatcherMCP"])
     ],
     targets: [
+        .target(name: "GhRunWatcherIPC"),
         .executableTarget(
-            name: "RunWatcher"
+            name: "RunWatcher",
+            dependencies: ["GhRunWatcherIPC"],
+            path: "Sources/GhRunWatcher"
+        ),
+        .executableTarget(
+            name: "RunWatcherMCP",
+            dependencies: ["GhRunWatcherIPC"]
         )
     ]
 )

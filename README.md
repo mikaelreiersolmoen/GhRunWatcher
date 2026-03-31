@@ -11,6 +11,7 @@ A lightweight macOS menu bar app that monitors GitHub Actions workflow runs and 
 - Lives in your menu bar for quick access
 - Monitors GitHub Actions runs by ID
 - Desktop notifications when runs finish
+- MCP server for AI agent integration
 
 ## Requirements
 
@@ -49,6 +50,36 @@ The app will be created at `build/GhRunWatcher.app`. Move it to your Application
 3. Click the GhRunWatcher menu bar icon -> Add Run Watch...
 4. Enter the run ID and click Add
 5. You'll receive a notification when the run completes
+
+## MCP Server
+
+GhRunWatcher includes a bundled [MCP](https://modelcontextprotocol.io/) server that lets AI agents (such as Claude Code) add and manage run watches programmatically.
+
+### Setup
+
+The app must be running for the MCP server to work.
+
+**Claude Code:**
+
+```bash
+claude mcp add ghrunwatcher -- /Applications/GhRunWatcher.app/Contents/MacOS/GhRunWatcherMCP
+```
+
+**Codex:**
+
+```bash
+codex mcp add ghrunwatcher -- /Applications/GhRunWatcher.app/Contents/MacOS/GhRunWatcherMCP
+```
+
+### Available tools
+
+| Tool | Description |
+|------|-------------|
+| `add_watch` | Watch a GitHub Actions run. Accepts `run_id` (required) and `repo` in `OWNER/REPO` format (optional). |
+| `list_watches` | List all active watches. |
+| `remove_watch` | Remove a watch by its `watch_id`. |
+
+The `repo` parameter lets agents watch runs from any repository without needing one configured in the app.
 
 ## License
 

@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 
-ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd -P)"
 BUILD_DIR="$ROOT_DIR/build"
 APP_NAME="GhRunWatcher"
 APP_DIR="$BUILD_DIR/${APP_NAME}.app"
@@ -18,6 +18,11 @@ rm -rf "$APP_DIR"
 mkdir -p "$MACOS_DIR" "$RESOURCES_DIR"
 
 cp "$EXECUTABLE" "$MACOS_DIR/$APP_NAME"
+
+MCP_EXECUTABLE="$ROOT_DIR/.build/apple/Products/Release/GhRunWatcherMCP"
+if [ -f "$MCP_EXECUTABLE" ]; then
+  cp "$MCP_EXECUTABLE" "$MACOS_DIR/GhRunWatcherMCP"
+fi
 
 ICONSET_DIR="$BUILD_DIR/AppIcon.iconset"
 rm -rf "$ICONSET_DIR"

@@ -1,5 +1,6 @@
 import AppKit
 import Foundation
+import GhRunWatcherIPC
 
 @MainActor
 final class WatchManager: ObservableObject {
@@ -74,10 +75,6 @@ final class WatchManager: ObservableObject {
             showError(message: "Run ID cannot be empty.")
             return
         }
-        guard runId.allSatisfy(\.isNumber) else {
-            showError(message: "Run ID must contain only numbers.")
-            return
-        }
 
         startWatch(runId: runId)
     }
@@ -120,44 +117,89 @@ final class WatchManager: ObservableObject {
     }
 
     func startWatch(runId: String) {
-        guard let repositoryURL else {
-            showError(message: "Select a Git repository before starting a watch.")
-            return
+        do {
+            _ = try addWatch(runId: runId)
+        } catch {
+            showError(message: error.localizedDescription)
+        }
+    }
+
+    enum WatchError: LocalizedError {
+        case noRepository
+        case invalidRunId
+        case launchFailed(String)
+        case watchNotFound
+
+        var errorDescription: String? {
+            switch self {
+            case .noRepository:
+                return "No Git repository configured. Select one in the GhRunWatcher menu."
+            case .invalidRunId:
+                return "Run ID must contain only numbers."
+            case .launchFailed(let message):
+                return message
+            case .watchNotFound:
+                return "Watch not found."
+            }
+        }
+    }
+
+    @discardableResult
+    func addWatch(runId: String, repo: String? = nil) throws -> RunWatch {
+        guard repo != nil || repositoryURL != nil else {
+            throw WatchError.noRepository
+        }
+        guard runId.allSatisfy(\.isNumber), !runId.isEmpty else {
+            throw WatchError.invalidRunId
         }
 
-        let watch = RunWatch(runId: runId)
+        let watch = RunWatch(runId: runId, repo: repo)
         watches.append(watch)
 
         do {
             let task = try WatchTask(
                 runId: runId,
                 repositoryURL: repositoryURL,
+                repo: repo,
                 githubCLIPath: githubCLIPath
             ) { [weak self] result in
                 Task { @MainActor in
-                    self?.handleWatchResult(watchId: watch.id, runId: runId, result: result)
+                    self?.handleWatchResult(watchId: watch.id, runId: runId, repo: repo, result: result)
                 }
             }
             tasks[watch.id] = task
             task.start()
+            return watch
         } catch {
             removeWatch(id: watch.id)
-            showError(message: error.localizedDescription)
+            throw WatchError.launchFailed(error.localizedDescription)
         }
     }
 
-    private func handleWatchResult(watchId: UUID, runId: String, result: WatchResult) {
+    func getWatches() -> [WatchInfo] {
+        watches.map { WatchInfo(id: $0.id.uuidString, runId: $0.runId, repo: $0.repo) }
+    }
+
+    @discardableResult
+    func removeWatchById(_ id: UUID) -> Bool {
+        guard watches.contains(where: { $0.id == id }) else { return false }
+        removeWatch(id: id)
+        return true
+    }
+
+    private func handleWatchResult(watchId: UUID, runId: String, repo: String?, result: WatchResult) {
         removeWatch(id: watchId)
 
+        let label = repo.map { "\($0) #\(runId)" } ?? "Run #\(runId)"
         switch result {
         case .success(let exitCode, let lastLine):
             postNotification(
-                title: "✅ Run #\(runId) succeeded",
+                title: "✅ \(label) succeeded",
                 body: buildNotificationBody(exitCode: exitCode, lastLine: lastLine)
             )
         case .workflowFailed(let exitCode, let lastLine):
             postNotification(
-                title: "❌ Run #\(runId) failed",
+                title: "❌ \(label) failed",
                 body: buildNotificationBody(exitCode: exitCode, lastLine: lastLine)
             )
         case .failure(_, let message):

@@ -10,7 +10,7 @@ struct WatchMenuView: View {
                 Text("No active watches")
             } else {
                 ForEach(watchManager.watches) { watch in
-                    Text("#\(watch.runId)")
+                    Text(watch.repo.map { "#\(watch.runId) (\($0))" } ?? "#\(watch.runId)")
                         .padding(.vertical, 2)
                 }
             }

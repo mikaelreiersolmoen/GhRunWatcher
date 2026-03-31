@@ -4,7 +4,6 @@ final class WatchTask {
     private static let maxBufferSize = 1024 * 1024 // 1 MB max per buffer
 
     private let runId: String
-    private let repositoryURL: URL
     private let process: Process
     private let stdoutPipe = Pipe()
     private let stderrPipe = Pipe()
@@ -15,24 +14,31 @@ final class WatchTask {
 
     init(
         runId: String,
-        repositoryURL: URL,
+        repositoryURL: URL?,
+        repo: String?,
         githubCLIPath: String?,
         completion: @escaping (WatchResult) -> Void
     ) throws {
         self.runId = runId
-        self.repositoryURL = repositoryURL
         self.completion = completion
         self.process = Process()
+
+        var args = ["run", "watch", "--exit-status", runId]
+        if let repo {
+            args += ["-R", repo]
+        }
 
         if let githubCLIPath {
             let ghPath = URL(fileURLWithPath: githubCLIPath).appendingPathComponent("gh").path
             process.executableURL = URL(fileURLWithPath: ghPath)
-            process.arguments = ["run", "watch", "--exit-status", runId]
+            process.arguments = args
         } else {
             process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
-            process.arguments = ["gh", "run", "watch", "--exit-status", runId]
+            process.arguments = ["gh"] + args
         }
-        process.currentDirectoryURL = repositoryURL
+        if let repositoryURL {
+            process.currentDirectoryURL = repositoryURL
+        }
         process.environment = Self.buildEnvironment()
         process.standardOutput = stdoutPipe
         process.standardError = stderrPipe

@@ -5,6 +5,14 @@ import SwiftUI
 struct GhRunWatcherApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @StateObject private var watchManager = WatchManager()
+    private let ipcServer: IPCServer
+
+    init() {
+        let manager = WatchManager()
+        _watchManager = StateObject(wrappedValue: manager)
+        ipcServer = IPCServer(watchManager: manager)
+        ipcServer.start()
+    }
 
     var body: some Scene {
         MenuBarExtra {
