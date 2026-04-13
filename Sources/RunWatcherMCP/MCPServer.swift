@@ -7,7 +7,7 @@ struct MCPServer {
     let tools: [MCPToolDefinition] = [
         MCPToolDefinition(
             name: "add_watch",
-            description: "Add a GitHub Actions workflow run to watch. You will be notified when it completes.",
+            description: "Add a GitHub Actions workflow run to watch. The user (not the agent) will receive a desktop notification when the run completes; the agent will not be informed.",
             inputSchema: .object([
                 "type": .string("object"),
                 "properties": .object([
